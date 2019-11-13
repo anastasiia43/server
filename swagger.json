@@ -1,0 +1,316 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "server",
+    "version": "1.0.0",
+    "title": "Swagger",
+    "contact": {
+      "email": "poshta@gmail.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Credit Request",
+      "description": "API for credit requests"
+    },
+    {
+      "name": "Users Request",
+      "description": "API for users requests"
+    }
+  ],
+  "paths": {
+    "/credits/": {
+      "get": {
+        "summary": "Get all credit",
+        "tags": [
+          "Credit Request"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/credits/{user_id}": {
+      "parameters": [
+        {
+          "name": "user_id",
+          "in": "path",
+          "required": true,
+          "description": "User ID",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "summary": "Create new credit",
+        "tags": [
+          "Credit Request"
+        ],
+        "requestBody": {
+          "description": "Credit Request Object",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string"
+                  },
+                  "money": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Credit id not found"
+          }
+        }
+      }
+    },
+    "/credits/{credit_id}": {
+      "parameters": [
+        {
+          "name": "credit_id",
+          "in": "path",
+          "required": true,
+          "description": "Credit ID",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Credit Request"
+        ],
+
+        "summary": "Get credit by id",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                  "$ref": "#/components/schemas/credit"
+              }
+            }
+          },
+          "404": {
+            "description": "Credit id not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Credit Request"
+        ],
+
+        "summary": "change status",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "credit id not found"
+          },
+          "500": {
+            "description": "Unexpected error."
+          }
+        }
+      },
+      "put": {
+        "summary": "Update credit",
+        "tags": [
+          "Credit Request"
+        ],
+        "requestBody": {
+          "description": "Credit Request Object",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string"
+                  },
+                  "money": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Credit id not found"
+          }
+        }
+      }
+    },
+    "/users/{user_id}": {
+      "parameters": [
+        {
+          "name": "user_id",
+          "in": "path",
+          "required": true,
+          "description": "User ID",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Get all user credits",
+        "tags": [
+          "Users Request"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/credit"
+              }
+            }
+          },
+          "404": {
+            "description": "User id not found"
+          },
+          "500": {
+            "description": "Unexpected error"
+          }
+        }
+      }
+    },
+    "/users/": {
+      "post": {
+        "tags": [
+          "Users Request"
+        ],
+        "summary": "Create new user id",
+        "requestBody": {
+          "description": "Credit Request Object",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "salary": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/components/schemas/user"
+            }
+          },
+          "500": {
+            "description": "Unexpected error."
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Users Request"
+        ],
+        "summary": "Get all users",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "credit": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "money": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "user": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "salary": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "credits": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
