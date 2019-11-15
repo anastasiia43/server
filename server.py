@@ -1,49 +1,18 @@
 from flask import Flask, request, jsonify, make_response
 from flask_swagger_ui import get_swaggerui_blueprint
+from flask_mysqldb import MySQL
 
-budget = 17000
+budget = 57000
 
-user0={
-    "id":"0",
-    "name":"Olena",
-    "salary":"2000",
-    "phone":"+380930472937",
-    "credits":["0"]
-}
-user1={
-    "id":"1",
-    "name":"Rick",
-    "salary":"2000",
-    "phone":"+380930472937",
-    "credits":["1","2"]
-}
-credit0 = {
-    "id" : "0",
-    "date" : "12.10.2018",
-    "money" : "2000",
-    "status" : "activity"
-}
-credit1 = {
-    "id" : "1",
-    "date" : "12.02.2019",
-    "money" : "3000",
-    "status" : "activity"
-}
-credit2 = {
-    "id" : "2",
-    "date" : "23.04.2018",
-    "money" : "5000",
-    "status" : "activity"
-}
-users = [user0,user1]
-credits = [credit0,credit1,credit2]
-
-budget-=int(credit0['money'])
-budget-=int(credit1['money'])
-budget-=int(credit2['money'])
 # Init app
 app = Flask(__name__)
 
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = 'password'
+app.config['MYSQL_DB'] = 'lab7'
+
+mysql = MySQL(app)
 
 """ swagger specific """
 SWAGGER_URL = '/swagger'
@@ -60,104 +29,200 @@ app.register_blueprint(SWAGGERUI_BLUEPRINT, url_prefix=SWAGGER_URL)
 #  USER
 @app.route('/users/<user_id>', methods=['GET'])
 def get_user(user_id):
-    if 0<=int(user_id)<len(users):
-        return jsonify(users[int(user_id)]["credits"])
-    else:
-        return make_response(jsonify('user id not found'), 404)
+    cur = mysql.connection.cursor()
+    credit = user_credit=cur.execute("SELECT credit FROM users WHERE id = %s",(user_id,))
+    if credit!=1:
+        return make_response(jsonify('user id not found'), 404)    
+    credit = cur.fetchall()
+    mysql.connection.commit()
+    cur.close()
+    
+    credit = str(credit)[4:-5]
+    print(credit)
+    list =[]
+    for el in credit.split():
+	list.append(el)
+    print(list)
+    return jsonify(list)
 
 
 @app.route('/users/', methods=['GET'])
 def get_all_user():
-    id_all_user = []
-    for i in range(len(users)):
-        id_all_user.append(str(i))
-    return jsonify(id_all_user)
+    cur = mysql.connection.cursor()
+    id_all = user_credit=cur.execute("SELECT id FROM users")
+    id_all = cur.fetchall()
+    mysql.connection.commit()
+    cur.close()
+    print(id_all)
+    id_all = str(id_all)[2:-3]
+    print(id_all)
+    list =[]
+    for el in id_all.split(',), ('):
+	list.append(el)
+    print(list)
+    return jsonify(list)
 
 
 @app.route('/users/', methods=['POST'])
 def create_user():
-        user = {
-            'id': str(len(users)),
-            'name': request.json['name'],
-            'salary': request.json['salary'],
-            'phone': request.json['phone'],
-            'credits': []
-        }
-        users.append(user)
-        return jsonify(len(users)-1)
+       
+	name = request.json['name']
+	salary = request.json['salary']
+	phone = request.json['phone']
+	cur = mysql.connection.cursor()
+	cur.execute("INSERT INTO users( name,salary,phone,credit) VALUES( %s, %s, %s ,%s)",(name, salary,phone,""))
+
+	user_id=cur.execute("select MAX(id) from users")
+	user_id = str(cur.fetchall())
+	user_id = user_id[2:-4]
+
+	mysql.connection.commit()
+	cur.close()
+   
+        return user_id
 
 #  CREDIT
 @app.route('/credits/', methods=['GET'])
 def get_all_credit():
-    id_all_credit = []
-    for i in range(len(credits)):
-        id_all_credit.append(str(i))
-    return jsonify(id_all_credit)
+    cur = mysql.connection.cursor()
+    id_all_credit = user_credit=cur.execute("SELECT credit FROM users")
+    id_all_credit = cur.fetchall()
+    mysql.connection.commit()
+    cur.close()
+    id_all_credit = str(id_all_credit)[4:-5]
+    list =[]
+    for el in id_all_credit.split():
+	list.append(el)
+    print(list)
+    return jsonify(list)
 
 
 @app.route('/credits/<credit_id>', methods=['GET'])
 def get_credit(credit_id):
-    if 0 <= int(credit_id) < len(credits):
-        return jsonify(credits[int(credit_id)])
-    else:
-        return make_response(jsonify('user id not found'), 404)
+    cur = mysql.connection.cursor()
+    credit = user_credit=cur.execute("SELECT * FROM credit WHERE id = %s",(credit_id,))
+    if credit!=1:
+        return make_response(jsonify('credit id not found'), 404)    
+    credit = cur.fetchall()
+    mysql.connection.commit()
+    cur.close()
+    
+    credit = str(credit)[2:-3]
+    print(credit)
+    list =[]
+    for el in credit.split(", u"):
+	list.append(el)
+    print(list)
+    return jsonify(list)
+
 
 
 @app.route('/credits/<user_id>', methods=['POST'])
 def post_credit(user_id):
-    if 0 <= int(user_id) < len(users):
-        if int(users[int(user_id)]["salary"])*5<int(request.json['money']):
-            return make_response(jsonify('too small salary'), 500)
         if int(request.json['money'])<100:
             return make_response(jsonify('too little credit'), 500)
         if budget>=float(request.json['money']):
             money = float(request.json['money'])*0.3+float(request.json['money'])
-            credit = {
-                'id': str(len(credits)),
-                'date': request.json['date'],
-                'money': str(money),
-                'status' : "activity"
-            }
+
             global budget
             budget-=float(request.json['money'])
-            users[int(user_id)]['credits'].append(str(len(credits)))
-            credits.append(credit)
-            return jsonify(len(credits)-1)
+
+	    date = request.json['date']
+	    money = request.json['money']
+	    status = "activity"
+	    cur = mysql.connection.cursor()
+	    cur.execute("INSERT INTO credit(date,money,status) VALUES(%s, %s, %s)",(date, money,status))
+	    
+
+	    credit_id=cur.execute("select MAX(id) from credit")
+	    credit_id = str(cur.fetchall())
+	    credit_id = credit_id[2:-4]
+ 
+	    user_credit=cur.execute("SELECT credit FROM users WHERE id = %s",(user_id,))
+	    if user_credit!=1:
+		return make_response(jsonify('user id not found'), 404)
+	   
+	    user_credit = cur.fetchall()
+
+	    if user_credit == ((None,),):
+		user_credit = ""
+		user_credit =  str(credit_id)
+	    else:
+		user_credit = str(user_credit)
+		user_credit = user_credit[4:-5]
+		print(user_credit)
+		user_credit = str(user_credit)+ " " + str(credit_id)
+	    
+	    cur.execute("UPDATE users SET credit = %s WHERE id = %s",(user_credit,user_id))	
+	   
+	    mysql.connection.commit()
+	    cur.close()
+		
+	    
+            return credit_id
         else:
             return make_response(jsonify('too much credit'), 500)
-    else:
-        return make_response(jsonify('user id not found'), 404)
+    
+        
 
 
 @app.route('/credits/<credit_id>', methods=['PUT'])
 def put_credit(credit_id):
-    m = budget+float(credits[int(credit_id)]['money'])
-    if 0 <= int(credit_id) < len(credits):
-        if int(request.json['money']) < 100:
-                return make_response(jsonify('too little credit'), 500)
-        if  m >= int(request.json['money']):
-            global budget
-            budget+=float(credits[int(credit_id)]['money'])
+    cur = mysql.connection.cursor()
+    money = cur.execute('SELECT money FROM credit WHERE id = %s',(credit_id,))
+    if money !=1:
+            return make_response(jsonify('credit not find'), 404)
+    money= str(cur.fetchall())[4:-5]
+    print(money)
+    global budget
+    budget+=int(money)
+    if int(request.json['money'])<100:
+            return make_response(jsonify('too little credit'), 500)
+    if budget>=float(request.json['money']):
             money = float(request.json['money'])*0.3+float(request.json['money'])
-            credits[int(credit_id)]['date']=request.json['date']
-            credits[int(credit_id)]['money'] = str(money)
+
+            
             budget-=float(request.json['money'])
-            return jsonify(credits[int(credit_id)])
+        
+	    date = request.json['date']
+	    money = request.json['money']
+	    cur.execute("UPDATE credit SET date = %s,money = %s WHERE id = %s",(date,money,credit_id))
+	    
+
+	    credit_id=cur.execute("select MAX(id) from credit")
+	    credit_id = str(cur.fetchall())
+	    credit_id = credit_id[2:-4]
+ 
+	    
+
+	    mysql.connection.commit()
+	    cur.close()
+		
+	    
+            return credit_id
     else:
-        return make_response(jsonify('credit id not found'), 404)
+            return make_response(jsonify('too much credit'), 500)
 
 
 @app.route('/credits/<credit_id>', methods=['DELETE'])
 def delete_credit(credit_id):
-    if credits[int(credit_id)]['status']=="ending":
-        return make_response(jsonify('already change'), 500)
-    if 0 <= int(credit_id) < len(credits):
-        credits[int(credit_id)]['status']="ending"
-        global budget
-        budget+=float(credits[int(credit_id)]['money'])
-        return jsonify(credits[int(credit_id)])
-    else:
-        return make_response(jsonify('credit id not found'), 404)
+    cur = mysql.connection.cursor()
+    status = cur.execute("SELECT status FROM credit WHERE id = %s",(credit_id,))
+    if status!=1:
+        return make_response(jsonify('credit id not found'), 404)    
+    status = str(cur.fetchall())[4:-5]
+    if status != 'activity':
+	return make_response(jsonify('yet'), 500)
+    cur.execute('UPDATE credit SET status = "ending" WHERE id = %s',(credit_id,)) 
+    money = cur.execute('SELECT money FROM credit WHERE id = %s',(credit_id,))
+    money= str(cur.fetchall())[4:-5]
+    print(money)
+    global budget
+    budget+=int(money)
+    mysql.connection.commit()
+    cur.close()
+    print(status)
+    return "success"
 
 
 if __name__ == '__main__':
