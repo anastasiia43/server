@@ -9,6 +9,9 @@ This repository contains a Python-based API server implemented in `server.py`. T
 1. Install dependencies using `pip`:
    ```bash
    pip install flask
-
+2. Run the server:
+   ```bash
+   python server.py
+ 
 ## API Documentation
 The API structure is defined in swagger.json, which can be used for automated testing and client generation.
